@@ -29,11 +29,15 @@ public class Client {
             try (DataInputStream inStream = new DataInputStream(socket.getInputStream());
                  DataOutputStream outStream = new DataOutputStream(socket.getOutputStream())) {
 
-                outStream.writeUTF(scn.nextLine());
-                outStream.writeUTF(scn.nextLine());
+                while (true) {
+                    String input = scn.nextLine();
+                    outStream.writeUTF(input);
+                    if("/exit".equalsIgnoreCase(input)){
+                        break;
+                    }
 
-                System.out.println(inStream.readUTF());
-                System.out.println(inStream.readUTF());
+                    System.out.println(inStream.readUTF());
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

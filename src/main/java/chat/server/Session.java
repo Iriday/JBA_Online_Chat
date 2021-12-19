@@ -37,6 +37,12 @@ public class Session implements Runnable {
                 }
             }
 
+            // send 10 lest msgs to user
+            for (var msg : server.getTenLastMsgs()) {
+                outStream.writeUTF(msg);
+            }
+
+            // allow user to input msgs
             while (true) {
                 String data = inStream.readUTF();
                 if ("/exit".equalsIgnoreCase(data)) {

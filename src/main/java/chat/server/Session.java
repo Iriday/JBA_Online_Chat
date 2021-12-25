@@ -75,6 +75,8 @@ public class Session implements Runnable {
                     var friends = server.getOnlineFriendsOfUser(login);
                     outStream.writeUTF(friends.isEmpty() ? NO_ONE_ONLINE.msg
                             : ONLINE.msg + String.join(" ", friends));
+                } else if (data.startsWith("/")) {
+                    outStream.writeUTF(INCORRECT_COMMAND.msg);
                 } else {
                     server.sendMessageToAllClients(login + ": " + data);
                 }

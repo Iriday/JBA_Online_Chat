@@ -71,9 +71,13 @@ public class Session implements Runnable {
                 if (EXIT.msg.equalsIgnoreCase(data)) {
                     server.removeSession(login);
                     break;
+                } else if (LIST.msg.equalsIgnoreCase(data)) {
+                    var friends = server.getOnlineFriendsOfUser(login);
+                    outStream.writeUTF(friends.isEmpty() ? NO_ONE_ONLINE.msg
+                            : ONLINE.msg + String.join(" ", friends));
+                } else {
+                    server.sendMessageToAllClients(login + ": " + data);
                 }
-
-                server.sendMessageToAllClients(login + ": " + data);
             }
 
         } catch (Exception e) {

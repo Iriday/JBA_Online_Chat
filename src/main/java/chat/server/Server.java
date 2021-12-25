@@ -6,8 +6,10 @@ import chat.Settings;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -82,6 +84,12 @@ public class Server {
         return !usersDb.containsKey(login) ? INCORRECT_LOGIN
                 : usersDb.get(login).equals(pass) ? AUTHORIZED_SUCCESSFULLY
                 : INCORRECT_PASSWORD;
+    }
+
+    public Set<String> getOnlineFriendsOfUser(String login) {
+        var friends = new HashSet<>(sessions.keySet());
+        friends.remove(login);
+        return friends;
     }
 
     public void stop() {

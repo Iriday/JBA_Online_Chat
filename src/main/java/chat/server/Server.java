@@ -1,5 +1,6 @@
 package chat.server;
 
+import chat.ServerMessage;
 import chat.Settings;
 
 import java.io.IOException;
@@ -12,13 +13,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static chat.ServerMessage.*;
+
 public class Server {
     private final int PORT;
     private final String HOST;
     private final ExecutorService executorService;
     private final Map<String, Session> sessions;
+    private final Map<String, String> usersDb;
     private final List<String> tenLastMsgs;
-    private int numberOfCreatedSessions = 0;
     private ServerSocket serverSocket;
 
 
@@ -31,6 +34,7 @@ public class Server {
         this.HOST = host;
         this.executorService = Executors.newFixedThreadPool(3);
         this.sessions = new ConcurrentHashMap<>();
+        this.usersDb = new ConcurrentHashMap<>();
         this.tenLastMsgs = new CopyOnWriteArrayList<>();
     }
 
@@ -40,19 +44,19 @@ public class Server {
             System.out.println("Server started!");
 
             while (true) {
-                executorService.submit(new Session(serverSocket.accept(), ++numberOfCreatedSessions, this));
+                executorService.submit(new Session(serverSocket.accept(), this));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public boolean addSession(String id, Session session) {
-        return sessions.putIfAbsent(id, session) == null;
+    public void addSession(String login, Session session) {
+        sessions.putIfAbsent(login, session);
     }
 
-    public void removeSession(String id) {
-        sessions.remove(id);
+    public void removeSession(String login) {
+        sessions.remove(login);
     }
 
     public void sendMessageToAllClients(String msg) {
@@ -64,8 +68,20 @@ public class Server {
         sessions.values().forEach(v -> v.sendMsgToClient(msg));
     }
 
-    public List<String> getTenLastMsgs(){
+    public List<String> getTenLastMsgs() {
         return tenLastMsgs;
+    }
+
+    public ServerMessage registerUser(String login, String pass) {
+        return pass.length() < 8 ? SHORT_PASSWORD
+                : usersDb.putIfAbsent(login, pass) == null ? REGISTERED_SUCCESSFULLY
+                : LOGIN_ALREADY_TAKEN;
+    }
+
+    public ServerMessage authenticateUser(String login, String pass) {
+        return !usersDb.containsKey(login) ? INCORRECT_LOGIN
+                : usersDb.get(login).equals(pass) ? AUTHORIZED_SUCCESSFULLY
+                : INCORRECT_PASSWORD;
     }
 
     public void stop() {

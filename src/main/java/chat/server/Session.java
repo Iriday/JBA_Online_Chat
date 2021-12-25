@@ -1,20 +1,23 @@
 package chat.server;
 
+import chat.ServerMessage;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import static chat.Command.*;
+import static chat.ServerMessage.*;
+
 public class Session implements Runnable {
     private final Socket socket;
-    private final long ID;
     private final Server server;
     private DataOutputStream outStream;
-    private String clientName;
+    private String login;
 
-    public Session(Socket socket, long id, Server server) {
+    public Session(Socket socket, Server server) {
         this.socket = socket;
-        this.ID = id;
         this.server = server;
     }
 
@@ -25,17 +28,37 @@ public class Session implements Runnable {
             DataInputStream inStream = new DataInputStream(socket.getInputStream());
             outStream = new DataOutputStream(socket.getOutputStream());
 
-            // register user
-            outStream.writeUTF("Server: write your name");
+            // auth/register user
+            outStream.writeUTF(AUTHORIZE_OR_REGISTER.msg);
             while (true) {
-                clientName = inStream.readUTF();
-                boolean isAdded = server.addSession(clientName, this);
-                if (isAdded) {
-                    break;
+                String[] cmdLoginAndPass = inStream.readUTF().split(" ");
+                if (cmdLoginAndPass.length != 3) {
+                    outStream.writeUTF(NOT_IN_CHAT.msg);
+                    continue;
+                }
+
+                login = cmdLoginAndPass[1];
+                String password = cmdLoginAndPass[2];
+
+                if (cmdLoginAndPass[0].equals(REGISTRATION.msg)) {
+                    ServerMessage serverMsg = server.registerUser(login, password);
+                    outStream.writeUTF(serverMsg.msg);
+                    if (serverMsg == REGISTERED_SUCCESSFULLY) {
+                        break;
+                    }
+
+                } else if (cmdLoginAndPass[0].equals(AUTH.msg)) {
+                    ServerMessage serverMsg = server.authenticateUser(login, password);
+                    outStream.writeUTF(serverMsg.msg);
+                    if (serverMsg == AUTHORIZED_SUCCESSFULLY) {
+                        break;
+                    }
                 } else {
-                    outStream.writeUTF("Server: this name is already taken! Choose another one.");
+                    outStream.writeUTF(NOT_IN_CHAT.msg);
                 }
             }
+
+            server.addSession(login, this);
 
             // send 10 lest msgs to user
             for (var msg : server.getTenLastMsgs()) {
@@ -45,12 +68,12 @@ public class Session implements Runnable {
             // allow user to input msgs
             while (true) {
                 String data = inStream.readUTF();
-                if ("/exit".equalsIgnoreCase(data)) {
-                    server.removeSession(clientName);
+                if (EXIT.msg.equalsIgnoreCase(data)) {
+                    server.removeSession(login);
                     break;
                 }
 
-                server.sendMessageToAllClients(clientName + ": " + data);
+                server.sendMessageToAllClients(login + ": " + data);
             }
 
         } catch (Exception e) {

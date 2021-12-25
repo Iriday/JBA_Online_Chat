@@ -7,9 +7,9 @@ public enum Command {
     CHAT("/chat"),
     EXIT("/exit");
 
-    public final String command;
+    public final String msg;
 
-    Command(String command) {
-        this.command = command;
+    Command(String msg) {
+        this.msg = msg;
     }
 }

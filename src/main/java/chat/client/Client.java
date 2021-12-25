@@ -1,5 +1,6 @@
 package chat.client;
 
+import chat.Command;
 import chat.Settings;
 
 import java.io.DataInputStream;
@@ -7,6 +8,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Scanner;
+
+import static chat.ServerMessage.*;
 
 public class Client {
     private final int PORT;
@@ -30,15 +33,20 @@ public class Client {
             try (DataInputStream inStream = new DataInputStream(socket.getInputStream());
                  DataOutputStream outStream = new DataOutputStream(socket.getOutputStream())) {
 
-                // register name
+                // register/auth
                 while (true) {
                     String msg = inStream.readUTF();
 
-                    if ("Server: write your name".equalsIgnoreCase(msg)
-                            || "Server: this name is already taken! Choose another one.".equalsIgnoreCase(msg)) {
-
+                    if (AUTHORIZE_OR_REGISTER.msg.equalsIgnoreCase(msg)
+                            || INCORRECT_LOGIN.msg.equalsIgnoreCase(msg)
+                            || LOGIN_ALREADY_TAKEN.msg.equals(msg)
+                            || INCORRECT_PASSWORD.msg.equals(msg)
+                            || SHORT_PASSWORD.msg.equals(msg)
+                            || NOT_IN_CHAT.msg.equals(msg)) {
                         System.out.println(msg);
                         outStream.writeUTF(scn.nextLine());
+                    } else if (REGISTERED_SUCCESSFULLY.msg.equals(msg)
+                            || AUTHORIZED_SUCCESSFULLY.msg.equals(msg)) {
                         break;
                     } else {
                         System.out.println("Error. Server sent unknown command");
@@ -53,7 +61,7 @@ public class Client {
                 while (true) {
                     String msg = scn.nextLine();
                     outStream.writeUTF(msg);
-                    if ("/exit".equalsIgnoreCase(msg)) {
+                    if (Command.EXIT.msg.equalsIgnoreCase(msg)) {
                         break;
                     }
                 }

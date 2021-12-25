@@ -17,9 +17,9 @@ public enum ServerMessage {
     ONLINE("online: ");
 
 
-    public final String message;
+    public final String msg;
 
-    ServerMessage(String message) {
-        this.message = "Server: " + message;
+    ServerMessage(String msg) {
+        this.msg = "Server: " + msg;
     }
 }

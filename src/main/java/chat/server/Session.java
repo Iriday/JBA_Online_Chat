@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Set;
 
 import static chat.Command.*;
 import static chat.ServerMessage.*;
@@ -15,6 +16,7 @@ public class Session implements Runnable {
     private final Server server;
     private DataOutputStream outStream;
     private String login;
+    private Chat currChat = null;
 
     public Session(Socket socket, Server server) {
         this.socket = socket;
@@ -58,27 +60,48 @@ public class Session implements Runnable {
                 }
             }
 
+            // make user online
             server.addSession(login, this);
-
-            // send 10 lest msgs to user
-            for (var msg : server.getTenLastMsgs()) {
-                outStream.writeUTF(msg);
-            }
 
             // allow user to input msgs
             while (true) {
-                String data = inStream.readUTF();
-                if (EXIT.msg.equalsIgnoreCase(data)) {
+                String clientInput = inStream.readUTF();
+
+                if (EXIT.msg.equalsIgnoreCase(clientInput)) {
                     server.removeSession(login);
+                    if (currChat != null) {
+                        currChat.leaveChat(login);
+                    }
                     break;
-                } else if (LIST.msg.equalsIgnoreCase(data)) {
+                } else if (LIST.msg.equalsIgnoreCase(clientInput)) {
                     var friends = server.getOnlineFriendsOfUser(login);
                     outStream.writeUTF(friends.isEmpty() ? NO_ONE_ONLINE.msg
                             : ONLINE.msg + String.join(" ", friends));
-                } else if (data.startsWith("/")) {
+                } else if (clientInput.startsWith(CHAT.msg + " ")) {
+                    String loginOfSecondUser = clientInput.substring(CHAT.msg.length() + 1);
+
+                    if (server.getSession(loginOfSecondUser) == null) {
+                        outStream.writeUTF(USER_NOT_ONLINE.msg);
+                    } else {
+                        if (currChat != null) {
+                            currChat.leaveChat(login);
+                        }
+                        currChat = Chat.getChat(Set.of(login, loginOfSecondUser), server);
+                        currChat.joinChat(login);
+
+                        // send 10 lest msgs to user
+                        for (var msg : currChat.getTenLastMsgs()) {
+                            outStream.writeUTF(msg);
+                        }
+                    }
+                } else if (clientInput.startsWith("/")) {
                     outStream.writeUTF(INCORRECT_COMMAND.msg);
                 } else {
-                    server.sendMessageToAllClients(login + ": " + data);
+                    if (currChat == null) {
+                        outStream.writeUTF(LIST_COMMAND.msg);
+                    } else {
+                        currChat.sendMessage(login, clientInput);
+                    }
                 }
             }
 
@@ -86,6 +109,9 @@ public class Session implements Runnable {
             e.printStackTrace();
         } finally {
             try {
+                if (currChat != null) {
+                    currChat.leaveChat(login);
+                }
                 socket.close();
             } catch (Exception e) {
                 e.printStackTrace();

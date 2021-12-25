@@ -12,7 +12,7 @@ public enum ServerMessage {
     REGISTERED_SUCCESSFULLY("you are registered successfully!"),
     AUTHORIZED_SUCCESSFULLY("you are authorized successfully!"),
     NOT_IN_CHAT("you are not in the chat!"),
-    LIST_COMMAND("user /list command to choose a user to text!"),
+    LIST_COMMAND("use /list command to choose a user to text!"),
     NO_ONE_ONLINE("no one online"),
     ONLINE("online: ");
 

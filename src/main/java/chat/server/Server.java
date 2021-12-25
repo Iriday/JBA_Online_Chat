@@ -7,11 +7,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,7 +21,6 @@ public class Server {
     private final ExecutorService executorService;
     private final Map<String, Session> sessions;
     private final Map<String, String> usersDb;
-    private final List<String> tenLastMsgs;
     private ServerSocket serverSocket;
 
 
@@ -37,7 +34,6 @@ public class Server {
         this.executorService = Executors.newFixedThreadPool(3);
         this.sessions = new ConcurrentHashMap<>();
         this.usersDb = new ConcurrentHashMap<>();
-        this.tenLastMsgs = new CopyOnWriteArrayList<>();
     }
 
     public void run() {
@@ -61,19 +57,6 @@ public class Server {
         sessions.remove(login);
     }
 
-    public void sendMessageToAllClients(String msg) {
-        tenLastMsgs.add(msg);
-        if (tenLastMsgs.size() >= 11) {
-            tenLastMsgs.remove(0);
-        }
-
-        sessions.values().forEach(v -> v.sendMsgToClient(msg));
-    }
-
-    public List<String> getTenLastMsgs() {
-        return tenLastMsgs;
-    }
-
     public ServerMessage registerUser(String login, String pass) {
         return pass.length() < 8 ? SHORT_PASSWORD
                 : usersDb.putIfAbsent(login, pass) == null ? REGISTERED_SUCCESSFULLY
@@ -90,6 +73,10 @@ public class Server {
         var friends = new HashSet<>(sessions.keySet());
         friends.remove(login);
         return friends;
+    }
+
+    public Session getSession(String login) {
+        return sessions.get(login);
     }
 
     public void stop() {

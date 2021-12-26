@@ -3,6 +3,7 @@ package chat.server;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
 public class Chat {
     private static final List<Chat> chats = new CopyOnWriteArrayList<>();
@@ -10,7 +11,7 @@ public class Chat {
     private final Server server;
     private final Set<String> users; // logins
     private final Set<String> usersCurrInChat; // logins
-    private final List<String> messages;
+    private final List<Map.Entry<String, Set<String>>> messages;
 
     private Chat(Set<String> users, Server server) {
         this.server = server;
@@ -34,13 +35,18 @@ public class Chat {
         }
     }
 
-    public List<String> getTenLastMsgs() {
-        return messages.subList(messages.size() < 10 ? 0 : messages.size() - 10, messages.size());
+    public synchronized List<String> getTenLastMsgs(String currUser) {
+        var rawTenMessages = messages.subList(messages.size() < 10 ? 0 : messages.size() - 10, messages.size());
+        var formattedTenMsgs = appendNewAndFormat(rawTenMessages, currUser);
+        makeMessagesNotNew(messages, currUser);
+        return formattedTenMsgs;
     }
 
-    public void sendMessage(String sender, String msg) {
-        String fullMsg = sender + " " + msg;
-        messages.add(fullMsg);
+    public synchronized void sendMessage(String sender, String msg) {
+        String fullMsg = sender + ": " + msg;
+        Set<String> notInChatUsers = getNotInChatUsers(users, usersCurrInChat);
+
+        messages.add(Map.entry(fullMsg, notInChatUsers));
 
         usersCurrInChat
                 .stream()
@@ -59,5 +65,28 @@ public class Chat {
 
     public void leaveChat(String user) {
         usersCurrInChat.remove(user);
+    }
+
+    private static Set<String> getNotInChatUsers(Set<String> users, Set<String> usersCurrInChat) {
+        return users
+                .stream()
+                .filter(u -> !usersCurrInChat.contains(u))
+                .collect(Collectors.toCollection(CopyOnWriteArraySet::new));
+    }
+
+    private static List<String> appendNewAndFormat(List<Map.Entry<String, Set<String>>> messages, String currUser) {
+        return messages
+                .stream()
+                .map(l -> l.getValue().contains(currUser) ? "(new) " + l.getKey() : l.getKey())
+                .collect(Collectors.toList());
+    }
+
+    private static void makeMessagesNotNew(List<Map.Entry<String, Set<String>>> messages, String currUser) {
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            var notOnlineUsers = messages.get(i).getValue();
+            if (!notOnlineUsers.remove(currUser)) {
+                break;
+            }
+        }
     }
 }

@@ -90,7 +90,7 @@ public class Session implements Runnable {
                         currChat.joinChat(login);
 
                         // send 10 lest msgs to user
-                        for (var msg : currChat.getTenLastMsgs()) {
+                        for (var msg : currChat.getTenLastMsgs(login)) {
                             outStream.writeUTF(msg);
                         }
                     }

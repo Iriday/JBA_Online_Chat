@@ -47,6 +47,7 @@ public class Client {
                         outStream.writeUTF(scn.nextLine());
                     } else if (REGISTERED_SUCCESSFULLY.msg.equals(msg)
                             || AUTHORIZED_SUCCESSFULLY.msg.equals(msg)) {
+                        System.out.println(msg);
                         break;
                     } else {
                         System.out.println("Error. Server sent unknown command");

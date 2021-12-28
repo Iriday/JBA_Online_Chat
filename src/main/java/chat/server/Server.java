@@ -20,9 +20,7 @@ public class Server {
     private final String HOST;
     private final ExecutorService executorService;
     private final Map<String, Session> sessions;
-    private final Map<String, String> usersDb;
     private ServerSocket serverSocket;
-
 
     public static void main(String[] args) {
         new Server(Settings.DEFAULT_PORT, Settings.DEFAULT_HOST).run();
@@ -33,7 +31,6 @@ public class Server {
         this.HOST = host;
         this.executorService = Executors.newFixedThreadPool(3);
         this.sessions = new ConcurrentHashMap<>();
-        this.usersDb = new ConcurrentHashMap<>();
     }
 
     public void run() {
@@ -59,13 +56,15 @@ public class Server {
 
     public ServerMessage registerUser(String login, String pass) {
         return pass.length() < 8 ? SHORT_PASSWORD
-                : usersDb.putIfAbsent(login, pass) == null ? REGISTERED_SUCCESSFULLY
+                : UserRepo.saveIfAbsent(login, encodePass(pass)) ? REGISTERED_SUCCESSFULLY
                 : LOGIN_ALREADY_TAKEN;
     }
 
     public ServerMessage authenticateUser(String login, String pass) {
-        return !usersDb.containsKey(login) ? INCORRECT_LOGIN
-                : usersDb.get(login).equals(pass) ? AUTHORIZED_SUCCESSFULLY
+        String repoPass = UserRepo.getUserPassByLogin(login);
+
+        return repoPass == null ? INCORRECT_LOGIN
+                : repoPass.equals(encodePass(pass)) ? AUTHORIZED_SUCCESSFULLY
                 : INCORRECT_PASSWORD;
     }
 
@@ -87,5 +86,9 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static String encodePass(String pass) {
+        return String.valueOf(pass.hashCode());
     }
 }

@@ -86,7 +86,7 @@ public class Session implements Runnable {
                         if (currChat != null) {
                             currChat.leaveChat(login);
                         }
-                        currChat = Chat.getChat(Set.of(login, loginOfSecondUser), server);
+                        currChat = Chat.getChat(Set.of(login, loginOfSecondUser));
                         currChat.joinChat(login);
 
                         // send 10 lest msgs to user

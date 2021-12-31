@@ -1,26 +1,51 @@
 package chat.server;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 public class Chat {
-    private static final List<Chat> chats = new CopyOnWriteArrayList<>();
+    private static final List<Chat> chats;
+    private static final String dbPath;
+    private static final Server server;
+    private static Gson gson;
 
-    private final Server server;
+    static {
+        server = Server.getServer();
+        dbPath = "chatsDb.txt";
+        gson = new Gson();
+        if (Files.exists(Path.of(dbPath))) {
+            chats = deserialize(dbPath, gson);
+        } else {
+            chats = new CopyOnWriteArrayList<>();
+        }
+    }
+
     private final Set<String> users; // logins
     private final Set<String> usersCurrInChat; // logins
     private final List<Map.Entry<String, Set<String>>> messages;
 
-    private Chat(Set<String> users, Server server) {
-        this.server = server;
+    private Chat(Set<String> users) {
         this.users = Collections.unmodifiableSet(users);
         this.usersCurrInChat = new CopyOnWriteArraySet<>();
         this.messages = new CopyOnWriteArrayList<>();
     }
 
-    public static Chat getChat(Set<String> users, Server server) {
+    private Chat(Set<String> users, List<Map.Entry<String, Set<String>>> messages) {
+        this.users = Collections.unmodifiableSet(users);
+        this.usersCurrInChat = new CopyOnWriteArraySet<>();
+        this.messages = messages;
+    }
+
+    public static Chat getChat(Set<String> users) {
         Optional<Chat> chat = chats
                 .stream()
                 .filter(c -> c.users.equals(users))
@@ -29,7 +54,7 @@ public class Chat {
         if (chat.isPresent()) {
             return chat.get();
         } else {
-            Chat newChat = new Chat(users, server);
+            Chat newChat = new Chat(users);
             chats.add(newChat);
             return newChat;
         }
@@ -39,6 +64,7 @@ public class Chat {
         var rawTenMessages = messages.subList(messages.size() < 10 ? 0 : messages.size() - 10, messages.size());
         var formattedTenMsgs = appendNewAndFormat(rawTenMessages, currUser);
         makeMessagesNotNew(messages, currUser);
+        serialize(chats, dbPath, gson);
         return formattedTenMsgs;
     }
 
@@ -53,6 +79,8 @@ public class Chat {
                 .map(server::getSession)
                 .filter(Objects::nonNull)
                 .forEach(session -> session.sendMsgToClient(fullMsg));
+
+        serialize(chats, dbPath, gson);
     }
 
     public void joinChat(String user) {
@@ -88,5 +116,47 @@ public class Chat {
                 break;
             }
         }
+    }
+
+    private static synchronized void serialize(List<Chat> chats, String dbPath, Gson gson) {
+        try (FileWriter fileWriter = new FileWriter(dbPath)) {
+            chats.forEach(c -> {
+                try {
+                    fileWriter
+                            .append(gson.toJson(c.users))
+                            .append("\n")
+                            .append(gson.toJson(c.messages))
+                            .append("\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static List<Chat> deserialize(String dbPath, Gson gson) {
+        List<String> raw;
+        try {
+            raw = Files.readAllLines(Path.of(dbPath));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<Chat> newChats = new CopyOnWriteArrayList<>();
+        for (int i = 0; i < raw.size(); i += 2) {
+            Set<String> newUsers = gson
+                    .fromJson(raw.get(i), new TypeToken<CopyOnWriteArraySet<String>>() {
+                    }.getType());
+
+            List<Map.Entry<String, Set<String>>> newMessages = gson
+                    .fromJson(raw.get(i + 1), new TypeToken<CopyOnWriteArrayList<AbstractMap.SimpleEntry<String, CopyOnWriteArraySet<String>>>>() {
+                    }.getType());
+
+            newChats.add(new Chat(newUsers, newMessages));
+        }
+
+        return newChats;
     }
 }

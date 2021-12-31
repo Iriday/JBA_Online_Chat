@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import static chat.ServerMessage.*;
 
 public class Server {
+    private static Server server;
     private final int PORT;
     private final String HOST;
     private final ExecutorService executorService;
@@ -23,10 +24,11 @@ public class Server {
     private ServerSocket serverSocket;
 
     public static void main(String[] args) {
-        new Server(Settings.DEFAULT_PORT, Settings.DEFAULT_HOST).run();
+        getServer();
+        server.run();
     }
 
-    public Server(int port, String host) {
+    private Server(int port, String host) {
         this.PORT = port;
         this.HOST = host;
         this.executorService = Executors.newFixedThreadPool(3);
@@ -90,5 +92,12 @@ public class Server {
 
     private static String encodePass(String pass) {
         return String.valueOf(pass.hashCode());
+    }
+
+    public static Server getServer() {
+        if (server == null) {
+            server = new Server(Settings.DEFAULT_PORT, Settings.DEFAULT_HOST);
+        }
+        return server;
     }
 }

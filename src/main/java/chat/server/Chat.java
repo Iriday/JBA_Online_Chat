@@ -159,4 +159,28 @@ public class Chat {
 
         return newChats;
     }
+
+    public String getStatistic(String curUserName) {
+        long curUserMsgsLen = messages
+                .stream()
+                .filter(e -> e.getKey().startsWith(curUserName + ": "))
+                .count();
+
+        String secUserName = users
+                .stream()
+                .filter(u -> !u.equals(curUserName))
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+
+        return new StringBuilder()
+                .append("Server:\n")
+                .append("Statistics with ").append(secUserName)
+                .append(":\n")
+                .append("Total messages: ").append(messages.size())
+                .append("\n")
+                .append("Messages from ").append(curUserName).append(": ").append(curUserMsgsLen)
+                .append("\n")
+                .append("Messages from ").append(secUserName).append(": ").append(messages.size() - curUserMsgsLen)
+                .toString();
+    }
 }

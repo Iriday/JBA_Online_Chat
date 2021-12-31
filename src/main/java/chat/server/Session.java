@@ -94,6 +94,8 @@ public class Session implements Runnable {
                             outStream.writeUTF(msg);
                         }
                     }
+                } else if (STATISTIC.msg.equals(clientInput)) {
+                    outStream.writeUTF(currChat == null ? LIST_COMMAND.msg : currChat.getStatistic(login));
                 } else if (clientInput.startsWith("/")) {
                     outStream.writeUTF(INCORRECT_COMMAND.msg);
                 } else {

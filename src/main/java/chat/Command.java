@@ -5,7 +5,8 @@ public enum Command {
     REGISTRATION("/registration"),
     LIST("/list"),
     CHAT("/chat"),
-    EXIT("/exit");
+    EXIT("/exit"),
+    STATISTIC("/stats");
 
     public final String msg;
 

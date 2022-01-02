@@ -7,7 +7,8 @@ public enum Command {
     CHAT("/chat"),
     EXIT("/exit"),
     STATISTIC("/stats"),
-    HISTORY("/history");
+    HISTORY("/history"),
+    UNREAD("/unread");
 
     public final String msg;
 

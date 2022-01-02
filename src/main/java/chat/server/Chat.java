@@ -202,4 +202,14 @@ public class Chat {
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
     }
+
+    public static List<String> getUsersThatSentUnreadMsgs(String login) {
+        return chats
+                .stream()
+                .filter(c -> c.users.contains(login))
+                .filter(c -> c.messages.stream().anyMatch(m -> m.getValue().contains(login)))
+                .map(c -> c.users.stream().filter(u -> !u.equals(login)).findFirst().orElseThrow(IllegalStateException::new))
+                .sorted()
+                .collect(Collectors.toList());
+    }
 }

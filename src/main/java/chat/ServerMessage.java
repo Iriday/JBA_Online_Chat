@@ -15,7 +15,8 @@ public enum ServerMessage {
     LIST_COMMAND("use /list command to choose a user to text!"),
     NO_ONE_ONLINE("no one online"),
     ONLINE("online: "),
-    VAL_SHOULD_BE_POSITIVE("value should be positive");
+    VAL_SHOULD_BE_POSITIVE("value should be positive"),
+    NO_ONE_UNREAD("no one unread");
 
 
     public final String msg;

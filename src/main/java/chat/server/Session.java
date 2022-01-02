@@ -124,6 +124,10 @@ public class Session implements Runnable {
                         outStream.writeUTF("Server:\n"
                                 + String.join("\n", currChat.getNLastMsgsStartingFrom(from, 25)));
                     }
+                } else if (UNREAD.msg.equals(clientInput)) {
+                    var users = Chat.getUsersThatSentUnreadMsgs(login);
+                    String usersStr = String.join(" ", users);
+                    outStream.writeUTF(users.size() == 0 ? NO_ONE_UNREAD.msg : "Server: unread from: " + usersStr);
                 } else if (clientInput.startsWith("/")) {
                     outStream.writeUTF(INCORRECT_COMMAND.msg);
                 } else {

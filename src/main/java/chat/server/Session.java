@@ -5,6 +5,7 @@ import chat.ServerMessage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.util.Set;
 
@@ -96,6 +97,33 @@ public class Session implements Runnable {
                     }
                 } else if (STATISTIC.msg.equals(clientInput)) {
                     outStream.writeUTF(currChat == null ? LIST_COMMAND.msg : currChat.getStatistic(login));
+                } else if (clientInput.startsWith(HISTORY.msg + " ")) {
+                    if (currChat == null) {
+                        outStream.writeUTF(LIST_COMMAND.msg);
+                    } else {
+                        String fromStr = clientInput.substring(HISTORY.msg.length() + 1);
+                        int from;
+                        try {
+                            var fromBigInt = new BigInteger(fromStr);
+
+                            try {
+                                from = fromBigInt.intValueExact();
+                            } catch (ArithmeticException e) {
+                                outStream.writeUTF("Server: value should not be bigger than: " + Integer.MAX_VALUE);
+                                continue;
+                            }
+
+                            if (from < 0) {
+                                outStream.writeUTF(VAL_SHOULD_BE_POSITIVE.msg);
+                                continue;
+                            }
+                        } catch (NumberFormatException e) {
+                            outStream.writeUTF("Server: " + fromStr + " is not a number!");
+                            continue;
+                        }
+                        outStream.writeUTF("Server:\n"
+                                + String.join("\n", currChat.getNLastMsgsStartingFrom(from, 25)));
+                    }
                 } else if (clientInput.startsWith("/")) {
                     outStream.writeUTF(INCORRECT_COMMAND.msg);
                 } else {

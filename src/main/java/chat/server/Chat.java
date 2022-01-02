@@ -183,4 +183,23 @@ public class Chat {
                 .append("Messages from ").append(secUserName).append(": ").append(messages.size() - curUserMsgsLen)
                 .toString();
     }
+
+    public synchronized List<String> getNLastMsgsStartingFrom(int from, int len) {
+        if (from < 0 || len < 0) {
+            throw new IllegalArgumentException("Values should not be negative");
+        }
+
+        int indexFrom = messages.size() < from ? 0 : messages.size() - from;
+        int indexTo = Math.min(messages.size() - from + len, messages.size());
+
+        if (indexTo <= 0) {
+            return List.of();
+        }
+
+        return messages
+                .subList(indexFrom, indexTo)
+                .stream()
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+    }
 }

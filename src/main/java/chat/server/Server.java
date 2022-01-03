@@ -6,12 +6,12 @@ import chat.Settings;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static chat.ServerMessage.*;
 
@@ -70,10 +70,13 @@ public class Server {
                 : INCORRECT_PASSWORD;
     }
 
-    public Set<String> getOnlineFriendsOfUser(String login) {
-        var friends = new HashSet<>(sessions.keySet());
-        friends.remove(login);
-        return friends;
+    public List<String> getOnlineFriendsOfUser(String login) {
+        return sessions
+                .keySet()
+                .stream()
+                .filter(u -> !u.equals(login))
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     public Session getSession(String login) {

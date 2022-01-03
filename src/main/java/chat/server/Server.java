@@ -33,6 +33,7 @@ public class Server {
         this.HOST = host;
         this.executorService = Executors.newFixedThreadPool(3);
         this.sessions = new ConcurrentHashMap<>();
+        registerUser("admin", "12345678"); // add hardcoded admin
     }
 
     public void run() {

@@ -10,7 +10,8 @@ public enum Command {
     HISTORY("/history"),
     UNREAD("/unread"),
     GRANT("/grant"),
-    REVOKE("/revoke");
+    REVOKE("/revoke"),
+    KICK("/kick");
 
     public final String msg;
 

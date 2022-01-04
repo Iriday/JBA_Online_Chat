@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +19,8 @@ public class Session implements Runnable {
     private final Server server;
     private DataOutputStream outStream;
     private String login;
-    private Chat currChat = null;
+    private volatile Chat currChat = null;
+    private volatile boolean isUserIdentified = false;
 
     public Session(Socket socket, Server server) {
         this.socket = socket;
@@ -32,42 +34,25 @@ public class Session implements Runnable {
             DataInputStream inStream = new DataInputStream(socket.getInputStream());
             outStream = new DataOutputStream(socket.getOutputStream());
 
-            // auth/register user
             outStream.writeUTF(AUTHORIZE_OR_REGISTER.msg);
-            while (true) {
-                String[] cmdLoginAndPass = inStream.readUTF().split(" ");
-                if (cmdLoginAndPass.length != 3) {
-                    outStream.writeUTF(NOT_IN_CHAT.msg);
-                    continue;
-                }
-
-                login = cmdLoginAndPass[1];
-                String password = cmdLoginAndPass[2];
-
-                if (cmdLoginAndPass[0].equals(REGISTRATION.msg)) {
-                    ServerMessage serverMsg = server.registerUser(login, password, List.of("USER"));
-                    outStream.writeUTF(serverMsg.msg);
-                    if (serverMsg == REGISTERED_SUCCESSFULLY) {
-                        break;
-                    }
-
-                } else if (cmdLoginAndPass[0].equals(AUTH.msg)) {
-                    ServerMessage serverMsg = server.authenticateUser(login, password);
-                    outStream.writeUTF(serverMsg.msg);
-                    if (serverMsg == AUTHORIZED_SUCCESSFULLY) {
-                        break;
-                    }
-                } else {
-                    outStream.writeUTF(NOT_IN_CHAT.msg);
-                }
-            }
-
-            // make user online
-            server.addSession(login, this);
 
             // allow user to input msgs
             while (true) {
+                if (!isUserIdentified) {
+                    if (!authOrRegister(inStream, outStream)) {
+                        break;
+                    } else {
+                        // make user online
+                        server.addSession(login, this);
+                        isUserIdentified = true;
+                    }
+                }
+
                 String clientInput = inStream.readUTF();
+                if (UserRepo.isUserBlocked(login)) {
+                    outStream.writeUTF(NOT_IN_CHAT.msg);
+                    continue;
+                }
 
                 if (EXIT.msg.equalsIgnoreCase(clientInput)) {
                     server.removeSession(login);
@@ -165,6 +150,37 @@ public class Session implements Runnable {
                             outStream.writeUTF(serverMsg.msg);
                         }
                     }
+                } else if (clientInput.startsWith(KICK.msg + " ")) {
+                    String kick = clientInput.substring(KICK.msg.length() + 1);
+
+                    if (!(UserRepo.isUserHasRole(login, "ADMIN") || UserRepo.isUserHasRole(login, "MODERATOR"))) {
+                        outStream.writeUTF(NOT_MODERATOR_OR_ADMIN.msg);
+                    } else if (kick.equals(login)) {
+                        outStream.writeUTF(CANT_KICK_YOURSELF.msg);
+                    } else if (UserRepo.isUserHasRole(login, "MODERATOR") && UserRepo.isUserHasRole(kick, "MODERATOR")) {
+                        outStream.writeUTF(CANT_KICK_MODERATOR.msg);
+                    } else if (UserRepo.isUserHasRole(kick, "ADMIN")) {
+                        outStream.writeUTF(CANT_KICK_ADMIN.msg);
+                    } else {
+                        if (!UserRepo.isUserLoginExists(kick)) {
+                            outStream.writeUTF(INCORRECT_LOGIN.msg);
+                        } else {
+                            Session session = server.getSession(kick);
+                            if (session == null) {
+                                outStream.writeUTF(USER_NOT_ONLINE.msg);
+                            } else {
+                                UserRepo.setBlocked(kick, LocalDateTime.now().plusSeconds(25));
+                                session.isUserIdentified = false;
+                                outStream.writeUTF("Server: " + kick + " was kicked!");
+                                session.sendMsgToClient(KICKED.msg);
+                                server.removeSession(kick);
+                                if (currChat != null) {
+                                    session.currChat.leaveChat(kick);
+                                    session.currChat = null;
+                                }
+                            }
+                        }
+                    }
                 } else if (clientInput.startsWith("/")) {
                     outStream.writeUTF(INCORRECT_COMMAND.msg);
                 } else {
@@ -180,12 +196,48 @@ public class Session implements Runnable {
             e.printStackTrace();
         } finally {
             try {
+                server.removeSession(login);
                 if (currChat != null) {
                     currChat.leaveChat(login);
                 }
                 socket.close();
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private boolean authOrRegister(DataInputStream inStream, DataOutputStream outStream) throws IOException {
+
+        while (true) {
+            String clientInput = inStream.readUTF();
+            String[] cmdLoginPass = clientInput.split(" ");
+
+            if (EXIT.msg.equalsIgnoreCase(clientInput)) {
+                return false;
+            } else if (cmdLoginPass.length == 3 && (cmdLoginPass[0].equals(REGISTRATION.msg) || cmdLoginPass[0].equals(AUTH.msg))) {
+                if (UserRepo.isUserBlocked(login)) {
+                    outStream.writeUTF(BANNED.msg);
+                } else {
+                    login = cmdLoginPass[1];
+                    String password = cmdLoginPass[2];
+
+                    if (cmdLoginPass[0].equals(REGISTRATION.msg)) {
+                        ServerMessage serverMsg = server.registerUser(login, password, List.of("USER"));
+                        outStream.writeUTF(serverMsg.msg);
+                        if (serverMsg == REGISTERED_SUCCESSFULLY) {
+                            return true;
+                        }
+                    } else {
+                        ServerMessage serverMsg = server.authenticateUser(login, password);
+                        outStream.writeUTF(serverMsg.msg);
+                        if (serverMsg == AUTHORIZED_SUCCESSFULLY) {
+                            return true;
+                        }
+                    }
+                }
+            } else {
+                outStream.writeUTF(NOT_IN_CHAT.msg);
             }
         }
     }

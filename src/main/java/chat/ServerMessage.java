@@ -26,7 +26,14 @@ public enum ServerMessage {
     NEW_MODERATOR("you are the new moderator now!"),
     NOT_MODERATOR("this user is not a moderator!"),
     NO_LONGER_MODERATOR("you are no longer a moderator!"),
-    NO_ROLE("this user does not have the role");
+    NO_ROLE("this user does not have the role"),
+
+    CANT_KICK_YOURSELF("you can't kick yourself!"),
+    NOT_MODERATOR_OR_ADMIN("you are not a moderator or an admin!"),
+    KICKED("you have been kicked out of the server!"),
+    CANT_KICK_MODERATOR("you can't kick a moderator!"),
+    CANT_KICK_ADMIN("you can't kick an admin!"),
+    BANNED("you are banned!");
 
 
     public final String msg;

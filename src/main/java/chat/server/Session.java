@@ -147,6 +147,24 @@ public class Session implements Runnable {
                             outStream.writeUTF(serverMsg.msg);
                         }
                     }
+                } else if (clientInput.startsWith(REVOKE.msg + " ")) {
+                    if (!UserRepo.isUserHasRole(login, "ADMIN")) {
+                        outStream.writeUTF(NOT_ADMIN.msg);
+                    } else {
+                        String revokeFrom = clientInput.substring(REVOKE.msg.length() + 1);
+                        ServerMessage serverMsg = UserRepo.removeRole(revokeFrom, "MODERATOR");
+                        if (serverMsg == ROLE_REMOVED) {
+                            outStream.writeUTF("Server: " + revokeFrom + " is no longer a moderator!");
+                            Session session = server.getSession(revokeFrom);
+                            if (session != null) {
+                                session.sendMsgToClient(NO_LONGER_MODERATOR.msg);
+                            }
+                        } else if (serverMsg == NO_ROLE) {
+                            outStream.writeUTF(NOT_MODERATOR.msg);
+                        } else {
+                            outStream.writeUTF(serverMsg.msg);
+                        }
+                    }
                 } else if (clientInput.startsWith("/")) {
                     outStream.writeUTF(INCORRECT_COMMAND.msg);
                 } else {

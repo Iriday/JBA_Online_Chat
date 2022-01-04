@@ -100,6 +100,23 @@ public class UserRepo {
         } else return ROLE_WAS_GRANTED_PREVIOUSLY;
     }
 
+    public static synchronized ServerMessage removeRole(String login, String role) {
+        User user = users
+                .stream()
+                .filter(u -> u.getLogin().equals(login))
+                .findFirst()
+                .orElse(null);
+
+        if (user == null) {
+            return INCORRECT_LOGIN;
+        } else if (user.getRoles().remove(role)) {
+            serialize(users);
+            return ROLE_REMOVED;
+        } else {
+            return NO_ROLE;
+        }
+    }
+
     public static boolean isUserHasRole(String login, String role) {
         return users
                 .stream()

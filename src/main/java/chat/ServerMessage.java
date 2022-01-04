@@ -20,9 +20,13 @@ public enum ServerMessage {
 
     ROLE_WAS_GRANTED_PREVIOUSLY("role was granted previously"),
     ROLE_GRANTED("role was granted successfully"),
+    ROLE_REMOVED("role was removed successfully"),
     ALREADY_MODERATOR("this user is already a moderator!"),
     NOT_ADMIN("you are not an admin!"),
-    NEW_MODERATOR("you are the new moderator now!");
+    NEW_MODERATOR("you are the new moderator now!"),
+    NOT_MODERATOR("this user is not a moderator!"),
+    NO_LONGER_MODERATOR("you are no longer a moderator!"),
+    NO_ROLE("this user does not have the role");
 
 
     public final String msg;

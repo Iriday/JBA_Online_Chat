@@ -8,7 +8,8 @@ public enum Command {
     EXIT("/exit"),
     STATISTIC("/stats"),
     HISTORY("/history"),
-    UNREAD("/unread");
+    UNREAD("/unread"),
+    GRANT("/grant");
 
     public final String msg;
 

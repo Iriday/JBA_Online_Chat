@@ -21,6 +21,7 @@ public class Server {
     private final String HOST;
     private final ExecutorService executorService;
     private final Map<String, Session> sessions;
+    private final String DEFAULT_ROLE;
     private ServerSocket serverSocket;
 
     public static void main(String[] args) {
@@ -33,7 +34,8 @@ public class Server {
         this.HOST = host;
         this.executorService = Executors.newFixedThreadPool(3);
         this.sessions = new ConcurrentHashMap<>();
-        registerUser("admin", "12345678"); // add hardcoded admin
+        this.DEFAULT_ROLE = "USER";
+        registerUser("admin", "12345678", List.of("ADMIN")); // add hardcoded admin
     }
 
     public void run() {
@@ -57,9 +59,9 @@ public class Server {
         sessions.remove(login);
     }
 
-    public ServerMessage registerUser(String login, String pass) {
+    public ServerMessage registerUser(String login, String pass, List<String> roles) {
         return pass.length() < 8 ? SHORT_PASSWORD
-                : UserRepo.saveIfAbsent(login, encodePass(pass)) ? REGISTERED_SUCCESSFULLY
+                : UserRepo.saveIfAbsent(login, encodePass(pass), roles) ? REGISTERED_SUCCESSFULLY
                 : LOGIN_ALREADY_TAKEN;
     }
 

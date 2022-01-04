@@ -16,7 +16,13 @@ public enum ServerMessage {
     NO_ONE_ONLINE("no one online"),
     ONLINE("online: "),
     VAL_SHOULD_BE_POSITIVE("value should be positive"),
-    NO_ONE_UNREAD("no one unread");
+    NO_ONE_UNREAD("no one unread"),
+
+    ROLE_WAS_GRANTED_PREVIOUSLY("role was granted previously"),
+    ROLE_GRANTED("role was granted successfully"),
+    ALREADY_MODERATOR("this user is already a moderator!"),
+    NOT_ADMIN("you are not an admin!"),
+    NEW_MODERATOR("you are the new moderator now!");
 
 
     public final String msg;

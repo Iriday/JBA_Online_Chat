@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.Socket;
+import java.util.List;
 import java.util.Set;
 
 import static chat.Command.*;
@@ -44,7 +45,7 @@ public class Session implements Runnable {
                 String password = cmdLoginAndPass[2];
 
                 if (cmdLoginAndPass[0].equals(REGISTRATION.msg)) {
-                    ServerMessage serverMsg = server.registerUser(login, password);
+                    ServerMessage serverMsg = server.registerUser(login, password, List.of("USER"));
                     outStream.writeUTF(serverMsg.msg);
                     if (serverMsg == REGISTERED_SUCCESSFULLY) {
                         break;
@@ -128,6 +129,24 @@ public class Session implements Runnable {
                     var users = Chat.getUsersThatSentUnreadMsgs(login);
                     String usersStr = String.join(" ", users);
                     outStream.writeUTF(users.size() == 0 ? NO_ONE_UNREAD.msg : "Server: unread from: " + usersStr);
+                } else if (clientInput.startsWith(GRANT.msg + " ")) {
+                    if (!UserRepo.isUserHasRole(login, "ADMIN")) {
+                        outStream.writeUTF(NOT_ADMIN.msg);
+                    } else {
+                        String grantTo = clientInput.substring(GRANT.msg.length() + 1);
+                        ServerMessage serverMsg = UserRepo.grantRole(grantTo, "MODERATOR");
+                        if (serverMsg == ROLE_GRANTED) {
+                            outStream.writeUTF("Server: " + grantTo + " is the new moderator!");
+                            Session session = server.getSession(grantTo);
+                            if (session != null) {
+                                session.sendMsgToClient(NEW_MODERATOR.msg);
+                            }
+                        } else if (serverMsg == ROLE_WAS_GRANTED_PREVIOUSLY) {
+                            outStream.writeUTF(ALREADY_MODERATOR.msg);
+                        } else {
+                            outStream.writeUTF(serverMsg.msg);
+                        }
+                    }
                 } else if (clientInput.startsWith("/")) {
                     outStream.writeUTF(INCORRECT_COMMAND.msg);
                 } else {

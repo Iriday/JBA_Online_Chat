@@ -1,6 +1,6 @@
-package chat.server;
+package chat.user;
 
-import chat.ServerMessage;
+import chat.additional.ServerMessage;
 import com.google.gson.Gson;
 
 import java.io.FileWriter;
@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import static chat.ServerMessage.*;
+import static chat.additional.ServerMessage.*;
 
 public class UserRepo {
     private static final String dbPath;

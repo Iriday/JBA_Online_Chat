@@ -1,7 +1,7 @@
 package chat.client;
 
-import chat.Command;
-import chat.Settings;
+import chat.additional.Command;
+import chat.additional.Settings;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Scanner;
 
-import static chat.ServerMessage.*;
+import static chat.additional.ServerMessage.*;
 
 public class Client {
     private final int PORT;

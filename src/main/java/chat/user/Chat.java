@@ -1,5 +1,6 @@
-package chat.server;
+package chat.user;
 
+import chat.server.Server;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 

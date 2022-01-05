@@ -1,7 +1,8 @@
 package chat.server;
 
-import chat.ServerMessage;
-import chat.Settings;
+import chat.additional.ServerMessage;
+import chat.additional.Settings;
+import chat.user.UserRepo;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -13,9 +14,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import static chat.Role.ADMIN;
-import static chat.Role.USER;
-import static chat.ServerMessage.*;
+import static chat.additional.Role.ADMIN;
+import static chat.additional.Role.USER;
+import static chat.additional.ServerMessage.*;
 
 public class Server {
     private static Server server;

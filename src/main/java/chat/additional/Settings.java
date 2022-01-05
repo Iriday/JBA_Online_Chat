@@ -1,4 +1,4 @@
-package chat;
+package chat.additional;
 
 public class Settings {
     public static final int DEFAULT_PORT = 12345;

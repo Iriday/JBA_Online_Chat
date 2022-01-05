@@ -1,4 +1,4 @@
-package chat.server;
+package chat.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,6 +1,8 @@
 package chat.server;
 
-import chat.ServerMessage;
+import chat.additional.ServerMessage;
+import chat.user.Chat;
+import chat.user.UserRepo;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -11,9 +13,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-import static chat.Command.*;
-import static chat.Role.*;
-import static chat.ServerMessage.*;
+import static chat.additional.Command.*;
+import static chat.additional.Role.*;
+import static chat.additional.ServerMessage.*;
 
 public class Session implements Runnable {
     private final Socket socket;

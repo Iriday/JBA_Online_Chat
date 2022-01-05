@@ -1,4 +1,4 @@
-package chat;
+package chat.additional;
 
 public enum ServerMessage {
     INCORRECT_LOGIN("incorrect login!"),

@@ -1,4 +1,4 @@
-package chat;
+package chat.additional;
 
 public enum Command {
     AUTH("/auth"),

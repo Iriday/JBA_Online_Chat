@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -39,7 +40,7 @@ public class UserRepo {
         if (isUserLoginExists(login)) {
             return false;
         }
-        users.add(new User(login, pass, new CopyOnWriteArrayList<>(roles), null));
+        users.add(new User(login, pass, new CopyOnWriteArrayList<>(roles), 0));
         serialize(users);
         return true;
     }
@@ -132,12 +133,12 @@ public class UserRepo {
         return users
                 .stream()
                 .filter(u -> u.getLogin().equals(login))
-                .map(u -> u.getBlockedUntil() != null && u.getBlockedUntil().isAfter(LocalDateTime.now()))
+                .map(u -> u.getBlockedUntil() > LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
                 .findFirst()
                 .orElse(false);
     }
 
-    public static void setBlocked(String login, LocalDateTime blockedUntil) {
+    public static void setBlocked(String login, long blockedUntil) {
         users
                 .stream()
                 .filter(u -> u.getLogin().equals(login))

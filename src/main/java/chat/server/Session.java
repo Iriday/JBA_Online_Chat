@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 
@@ -170,7 +171,7 @@ public class Session implements Runnable {
                             if (session == null) {
                                 outStream.writeUTF(USER_NOT_ONLINE.msg);
                             } else {
-                                UserRepo.setBlocked(kick, LocalDateTime.now().plusSeconds(25));
+                                UserRepo.setBlocked(kick, LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) + 25);
                                 session.isUserIdentified = false;
                                 outStream.writeUTF("Server: " + kick + " was kicked!");
                                 session.sendMsgToClient(KICKED.msg);

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 import static chat.Command.*;
+import static chat.Role.*;
 import static chat.ServerMessage.*;
 
 public class Session implements Runnable {
@@ -115,11 +116,11 @@ public class Session implements Runnable {
                     String usersStr = String.join(" ", users);
                     outStream.writeUTF(users.size() == 0 ? NO_ONE_UNREAD.msg : "Server: unread from: " + usersStr);
                 } else if (clientInput.startsWith(GRANT.msg + " ")) {
-                    if (!UserRepo.isUserHasRole(login, "ADMIN")) {
+                    if (!UserRepo.isUserHasRole(login, ADMIN.name())) {
                         outStream.writeUTF(NOT_ADMIN.msg);
                     } else {
                         String grantTo = clientInput.substring(GRANT.msg.length() + 1);
-                        ServerMessage serverMsg = UserRepo.grantRole(grantTo, "MODERATOR");
+                        ServerMessage serverMsg = UserRepo.grantRole(grantTo, MODERATOR.name());
                         if (serverMsg == ROLE_GRANTED) {
                             outStream.writeUTF("Server: " + grantTo + " is the new moderator!");
                             Session session = server.getSession(grantTo);
@@ -133,11 +134,11 @@ public class Session implements Runnable {
                         }
                     }
                 } else if (clientInput.startsWith(REVOKE.msg + " ")) {
-                    if (!UserRepo.isUserHasRole(login, "ADMIN")) {
+                    if (!UserRepo.isUserHasRole(login, ADMIN.name())) {
                         outStream.writeUTF(NOT_ADMIN.msg);
                     } else {
                         String revokeFrom = clientInput.substring(REVOKE.msg.length() + 1);
-                        ServerMessage serverMsg = UserRepo.removeRole(revokeFrom, "MODERATOR");
+                        ServerMessage serverMsg = UserRepo.removeRole(revokeFrom, MODERATOR.name());
                         if (serverMsg == ROLE_REMOVED) {
                             outStream.writeUTF("Server: " + revokeFrom + " is no longer a moderator!");
                             Session session = server.getSession(revokeFrom);
@@ -153,13 +154,13 @@ public class Session implements Runnable {
                 } else if (clientInput.startsWith(KICK.msg + " ")) {
                     String kick = clientInput.substring(KICK.msg.length() + 1);
 
-                    if (!(UserRepo.isUserHasRole(login, "ADMIN") || UserRepo.isUserHasRole(login, "MODERATOR"))) {
+                    if (!(UserRepo.isUserHasRole(login, ADMIN.name()) || UserRepo.isUserHasRole(login, MODERATOR.name()))) {
                         outStream.writeUTF(NOT_MODERATOR_OR_ADMIN.msg);
                     } else if (kick.equals(login)) {
                         outStream.writeUTF(CANT_KICK_YOURSELF.msg);
-                    } else if (UserRepo.isUserHasRole(login, "MODERATOR") && UserRepo.isUserHasRole(kick, "MODERATOR")) {
+                    } else if (UserRepo.isUserHasRole(login, MODERATOR.name()) && UserRepo.isUserHasRole(kick, MODERATOR.name())) {
                         outStream.writeUTF(CANT_KICK_MODERATOR.msg);
-                    } else if (UserRepo.isUserHasRole(kick, "ADMIN")) {
+                    } else if (UserRepo.isUserHasRole(kick, ADMIN.name())) {
                         outStream.writeUTF(CANT_KICK_ADMIN.msg);
                     } else {
                         if (!UserRepo.isUserLoginExists(kick)) {
@@ -223,7 +224,7 @@ public class Session implements Runnable {
                     String password = cmdLoginPass[2];
 
                     if (cmdLoginPass[0].equals(REGISTRATION.msg)) {
-                        ServerMessage serverMsg = server.registerUser(login, password, List.of("USER"));
+                        ServerMessage serverMsg = server.registerUser(login, password, List.of(USER.name()));
                         outStream.writeUTF(serverMsg.msg);
                         if (serverMsg == REGISTERED_SUCCESSFULLY) {
                             return true;

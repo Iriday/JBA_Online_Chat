@@ -13,6 +13,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static chat.Role.ADMIN;
+import static chat.Role.USER;
 import static chat.ServerMessage.*;
 
 public class Server {
@@ -21,7 +23,6 @@ public class Server {
     private final String HOST;
     private final ExecutorService executorService;
     private final Map<String, Session> sessions;
-    private final String DEFAULT_ROLE;
     private ServerSocket serverSocket;
 
     public static void main(String[] args) {
@@ -34,8 +35,7 @@ public class Server {
         this.HOST = host;
         this.executorService = Executors.newFixedThreadPool(3);
         this.sessions = new ConcurrentHashMap<>();
-        this.DEFAULT_ROLE = "USER";
-        registerUser("admin", "12345678", List.of("ADMIN")); // add hardcoded admin
+        registerUser("admin", "12345678", List.of(ADMIN.name(), USER.name())); // add hardcoded admin
     }
 
     public void run() {

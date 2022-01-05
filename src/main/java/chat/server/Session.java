@@ -77,10 +77,8 @@ public class Session implements Runnable {
                         currChat = Chat.getChat(Set.of(login, loginOfSecondUser));
                         currChat.joinChat(login);
 
-                        // send 10 lest msgs to user
-                        for (var msg : currChat.getTenLastMsgs(login)) {
-                            outStream.writeUTF(msg);
-                        }
+                        // send 25 lest msgs to user
+                        outStream.writeUTF(String.join("\n", currChat.getLast25Msgs(login)));
                     }
                 } else if (STATISTIC.msg.equals(clientInput)) {
                     outStream.writeUTF(currChat == null ? LIST_COMMAND.msg : currChat.getStatistic(login));

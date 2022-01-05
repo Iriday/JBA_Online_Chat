@@ -60,12 +60,24 @@ public class Chat {
         }
     }
 
-    public synchronized List<String> getTenLastMsgs(String currUser) {
-        var rawTenMessages = messages.subList(messages.size() < 10 ? 0 : messages.size() - 10, messages.size());
-        var formattedTenMsgs = appendNewAndFormat(rawTenMessages, currUser);
+    public synchronized List<String> getLast25Msgs(String currUser) {
+        var raw25Msgs = messages
+                .subList(messages.size() < 25 ? 0 : messages.size() - 25, messages.size());
+
+        long numOfViewedMsgs = raw25Msgs
+                .stream()
+                .filter(m -> !m.getValue().contains(currUser))
+                .count();
+        while (numOfViewedMsgs-- > 10) {
+            raw25Msgs.remove(0);
+        }
+
+        var formattedMsgs = appendNewAndFormat(raw25Msgs, currUser);
+
         makeMessagesNotNew(messages, currUser);
         serialize(chats, dbPath, gson);
-        return formattedTenMsgs;
+
+        return formattedMsgs;
     }
 
     public synchronized void sendMessage(String sender, String msg) {

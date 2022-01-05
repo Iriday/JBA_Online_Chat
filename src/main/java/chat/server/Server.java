@@ -34,7 +34,7 @@ public class Server {
     private Server(int port, String host) {
         this.PORT = port;
         this.HOST = host;
-        this.executorService = Executors.newFixedThreadPool(3);
+        this.executorService = Executors.newCachedThreadPool();
         this.sessions = new ConcurrentHashMap<>();
         registerUser("admin", "12345678", List.of(ADMIN.name(), USER.name())); // add hardcoded admin
     }
